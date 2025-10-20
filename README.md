@@ -7,8 +7,6 @@
 When the program starts (`cargo run`), the following execution flow occurs:
 
 ```mermaid
-
-```mermaid
 flowchart TD
     Start([Start main.rs]) --> Loop{Enter Loop}
     Loop --> Prompt[Display Menu Prompt]
