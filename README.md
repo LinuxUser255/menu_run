@@ -1,48 +1,51 @@
 # Menu Run
 
-A simple Rust application that presents an interactive menu and executes shell scripts based on user selection.
+**A simple Rust application that presents an interactive menu and executes shell scripts based on user selection.**
 
 ## Execution Flow
 
 When the program starts (`cargo run`), the following execution flow occurs:
 
 ```mermaid
+
+```mermaid
 flowchart TD
     Start([Start main.rs]) --> Loop{Enter Loop}
     Loop --> Prompt[Display Menu Prompt]
     Prompt --> Input[Read User Input]
-    Input --> Parse[Convert to lowercase & trim]
+    Input --> Parse[Convert to lowercase &amp; trim]
     Parse --> Match{Match Input}
-    
-    Match -->|"a"| ScriptOne[Print "shell script one"]
-    Match -->|"b"| ScriptTwo[Print "shell script two"] 
-    Match -->|"c"| ScriptThree[Print "shell script three"]
-    Match -->|"q/quit/exit"| Exit[Print "Exiting..."]
-    Match -->|Invalid| Invalid[Print "Invalid selection"]
-    
-    ScriptOne --> RunOne[runner::run(Script::One)]
-    ScriptTwo --> RunTwo[runner::run(Script::Two)]
-    ScriptThree --> RunThree[runner::run(Script::Three)]
-    
+
+    Match -->|a| ScriptOne[Print shell script one]
+    Match -->|b| ScriptTwo[Print shell script two]
+    Match -->|c| ScriptThree[Print shell script three]
+    Match -->|q/quit/exit| Exit[Print Exiting...]
+    Match -->|Invalid| Invalid[Print Invalid selection]
+
+    ScriptOne --> RunOne["runner::run(Script::One)"]
+    ScriptTwo --> RunTwo["runner::run(Script::Two)"]
+    ScriptThree --> RunThree["runner::run(Script::Three)"]
+
     RunOne --> ExecOne[Execute ./scripts/shell_script_one.sh]
     RunTwo --> ExecTwo[Execute ./scripts/shell_script_two.sh]
     RunThree --> ExecThree[Execute ./scripts/shell_script_three.sh]
-    
+
     ExecOne --> PrintCode1[Print exit code]
     ExecTwo --> PrintCode2[Print exit code]
     ExecThree --> PrintCode3[Print exit code]
-    
+
     PrintCode1 --> Break1[Break loop]
     PrintCode2 --> Break2[Break loop]
     PrintCode3 --> Break3[Break loop]
     Exit --> Break4[Break loop]
-    
+
     Invalid --> Loop
-    
+
     Break1 --> End([End])
     Break2 --> End
     Break3 --> End
     Break4 --> End
+
 ```
 
 ### Detailed Flow Description
@@ -60,7 +63,7 @@ flowchart TD
 
 4. **Input Matching**:
    - **Option A**: Prints "shell script one", calls `runner::run(Script::One)`, breaks loop
-   - **Option B**: Prints "shell script two", calls `runner::run(Script::Two)`, breaks loop  
+   - **Option B**: Prints "shell script two", calls `runner::run(Script::Two)`, breaks loop
    - **Option C**: Prints "shell script three", calls `runner::run(Script::Three)`, breaks loop
    - **Quit (q/quit/exit)**: Prints "Exiting...", breaks loop
    - **Invalid input**: Prints error message, continues loop
