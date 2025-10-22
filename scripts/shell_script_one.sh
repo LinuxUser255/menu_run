@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+
 echo ""
-echo "=== This is Shell Script One ==="
+printf "\e[1m\e[31mModule One\e[0m\n"
 echo ""
+
+
