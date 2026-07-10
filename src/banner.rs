@@ -1,4 +1,4 @@
-/// Prints the LinuxSecure banner
+/// Prints the Command Menu banner
 /// Displayed at the start of every program execution
 
 pub fn display_banner() {
