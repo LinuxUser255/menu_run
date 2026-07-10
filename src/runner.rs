@@ -6,6 +6,10 @@ pub enum Script {
     Three
 }
 
+//TODO Maybe add Security: Ensure the path is absolute to prevent Directory Traversal
+//     let absolute_path = path.canonicalize().map_err(|e| {
+//         HardnError::ExecutionFailed(format!("Failed to resolve path {}: {}", path.display(), e))
+//     })?
 pub fn run(script: Script) -> std::io::Result<i32> {
     let script_name = match script {
 
@@ -20,7 +24,7 @@ pub fn run(script: Script) -> std::io::Result<i32> {
 
     println!("Running script: {:?}", script_path);
 
-    // declare a output variable for the command
+    // declare an output variable for the command
     let status = Command::new("bash")
         .arg(&script_path)
         .status()?;
