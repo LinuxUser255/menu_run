@@ -13,7 +13,6 @@ fn prompt() {
     print_modules();
 }
 
-
 fn main() {
     loop {
         prompt();  // display the prompt to the user
