@@ -1,16 +1,20 @@
 use std::io::{self, Write};
 use runner::{run, Script};
 use banner::print_banner;
+use banner::print_modules;
+
 mod runner;
 mod banner;
 
 fn prompt() {
     println!("Menu: Make a selection (A, B, C, Q/quit/exit):  ");
     let _ = std::io::stdout().flush(); // flush the stdout buffer to display the prompt immediately
+    print_banner();
+    print_modules();
 }
 
+
 fn main() {
-    print_banner();
     loop {
         prompt();  // display the prompt to the user
         let mut input = String::new();
