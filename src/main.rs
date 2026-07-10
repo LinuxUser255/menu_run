@@ -1,18 +1,13 @@
-use std::io::{self, Write};
+use std::io;
 use runner::{run, Script};
 use banner::print_banner;
 mod runner;
 mod banner;
 
-fn prompt() {
-    println!("Menu: Make a selection (A, B, C, Q/quit/exit):  ");
-    let _ = std::io::stdout().flush(); // flush the stdout buffer to display the prompt immediately
-}
-
 fn main() {
     print_banner();
     loop {
-        prompt();  // display the prompt to the user
+        banner::display_banner();
         let mut input = String::new();
         if io::stdin().read_line(&mut input).is_err() {
             eprintln!("Read error");
@@ -24,6 +19,7 @@ fn main() {
                     println!("shell script one");
                     if let Ok(_exit_code) = run(Script::One) {
                         // Script executed successfully
+                        println!("Exit code: {}", _exit_code);
                     }
                     break;
                 }
@@ -31,6 +27,7 @@ fn main() {
                     println!("shell script two");
                     if let Ok(_exit_code) = run(Script::Two) {
                         // Script executed successfully
+                        println!("Exit code: {}", _exit_code);
                     }
                     break;
                 }
@@ -38,6 +35,7 @@ fn main() {
                     println!("shell script three");
                     if let Ok(_exit_code) = run(Script::Three) {
                         // Script executed successfully
+                        println!("Exit code: {}", _exit_code);
                     }
                     break;
                 }

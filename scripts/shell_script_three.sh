@@ -2,5 +2,5 @@
 
 
 echo ""
-echo "=== This is Shell Script Three ==="
+printf "\e[1m\e[31mModule Three\e[0m\n"
 echo ""
