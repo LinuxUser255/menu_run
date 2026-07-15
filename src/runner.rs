@@ -6,15 +6,10 @@ pub enum Script {
     Three
 }
 
-//TODO Maybe add Security: Ensure the path is absolute to prevent Directory Traversal
-//     let absolute_path = path.canonicalize().map_err(|e| {
-//         HardnError::ExecutionFailed(format!("Failed to resolve path {}: {}", path.display(), e))
-//     })?
 pub fn run(script: Script) -> std::io::Result<i32> {
     let script_name = match script {
 
         // need to chmod +x before running the shell scripts
-        // and use the absolute path to the shell scripts as seen here.
         Script::One => "./scripts/shell_script_one.sh",
         Script::Two => "./scripts/shell_script_two.sh",
         Script::Three => "./scripts/shell_script_three.sh",
