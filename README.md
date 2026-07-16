@@ -36,7 +36,11 @@ menu_run/
 │   ├── build/
 │   │   └── compiled output artifacts
 │   ├── c/
-│   │   └── C modules
+│   │   ├── main.c
+│   │   ├── mem_demo.c / mem_demo.h
+│   │   ├── custom_mempool.c / custom_mempool.h
+│   │   ├── custom_mempool_hardened.c / custom_mempool_hardened.h
+│   │   └── custom_mempool_canary.c / custom_mempool_canary.h
 │   ├── rust/
 │   │   └── Rust modules
 │   └── shell/
@@ -140,12 +144,49 @@ C modules live under:
 ```
 modules/c/
 ```
-A C module is compiled with `gcc` and then executed.
+Unlike the single-file Rust and shell modules, the `CHello` job compiles
+**multiple** `.c` files into one binary. The full list of source files for a
+given job is defined in `Job::c_source_paths()` in `src/jobs.rs`, and
+`runner::run_c` passes all of them to `gcc` in a single compile step, then
+runs the resulting artifact.
 
-Example file:
+Current source files:
+
 ```
-modules/c/hello.c
+modules/c/main.c
+modules/c/mem_demo.c / mem_demo.h
+modules/c/custom_mempool.c / custom_mempool.h
+modules/c/custom_mempool_hardened.c / custom_mempool_hardened.h
+modules/c/custom_mempool_canary.c / custom_mempool_canary.h
 ```
+
+`main.c` exercises each module in turn:
+
+- **`mem_demo`** — reads a name into a heap-allocated buffer
+  (`ask_name_malloc`) and releases it (`free_name`), demonstrating basic
+  manual allocation/ownership.
+- **`custom_mempool`** — a minimal bump-pointer memory pool
+  (`create_memory_pool` / `allocate_from_simple_pool`): one large
+  up-front reservation, sub-allocated with a moving cursor, no reuse.
+- **`custom_mempool_hardened`** — a fixed-size-slot pool (`MemPool`) that
+  adds a `used[]` bitmap so slots can be freed and reused, and so a
+  double-free can be detected instead of causing undefined behavior.
+- **`custom_mempool_canary`** — a fixed-size-slot pool (`MemPoolHardEnd`)
+  that adds a guard byte at the end of every slot, stamped with a random
+  per-pool value on allocation and checked on free
+  (`free_to_pool_hardend` returns `bool`, `true` meaning the canary was
+  intact). Detects a caller writing past the end of its slot.
+
+These three tiers are a simplified, teaching-oriented progression toward
+the design used in GrapheneOS's
+[`hardened_malloc`](https://github.com/GrapheneOS/hardened_malloc)
+(`h_malloc.c`): a single reserved region, divided into fixed-size slots,
+tracked with a bitmap, with per-slot canaries used to catch overflow.
+It intentionally omits real hardened_malloc's size classes, guard pages,
+memory tagging, quarantine queues, and cryptographically secure
+randomness — the goal here is to make the *mechanism* visible, not to
+reproduce a production allocator.
+
 Compiled output is written under:
 ```
 modules/build/
@@ -209,7 +250,7 @@ flowchart TD
 
     Dispatch -->|Shell| Shell["run_shell: bash &lt;source&gt;"]
     Dispatch -->|Rust| Rust["run_rust: rustc → run artifact"]
-    Dispatch -->|C| CLang["run_c: gcc → run artifact"]
+    Dispatch -->|C| CLang["run_c: gcc &lt;all c_source_paths&gt; → run artifact"]
 
     Shell --> Result{"Result&lt;i32&gt;"}
     Rust --> Result
@@ -232,39 +273,41 @@ flowchart TD
 
 2. **Interactive Loop**: The program enters an infinite loop. Each iteration calls
    `prompt()`, which:
-   - Prints the menu line asking for a selection (A, B, C, D, E, or Q/quit/exit)
-   - Flushes stdout so the prompt is immediately visible
-   - Prints the banner (`banner::print_banner`) and the module list (`banner::print_modules`)
+    - Prints the menu line asking for a selection (A, B, C, D, E, or Q/quit/exit)
+    - Flushes stdout so the prompt is immediately visible
+    - Prints the banner (`banner::print_banner`) and the module list (`banner::print_modules`)
 
 3. **User Input Processing**:
-   - Reads a line from stdin
-   - Trims whitespace and converts to lowercase for case-insensitive matching
-   - If reading fails, displays an error and continues the loop
+    - Reads a line from stdin
+    - Trims whitespace and converts to lowercase for case-insensitive matching
+    - If reading fails, displays an error and continues the loop
 
 4. **Input Matching**: Each menu key maps to a `Job` variant and calls `runner::run`:
-   - **Option A**: `Job::ShellOne`
-   - **Option B**: `Job::ShellTwo`
-   - **Option C**: `Job::ShellThree`
-   - **Option D**: `Job::RustHello`
-   - **Option E**: `Job::CHello`
-   - **Quit (q/quit/exit)**: Prints "Exiting..", breaks the loop
-   - **Invalid input**: Prints "Invalid selection.", continues the loop
+    - **Option A**: `Job::ShellOne`
+    - **Option B**: `Job::ShellTwo`
+    - **Option C**: `Job::ShellThree`
+    - **Option D**: `Job::RustHello`
+    - **Option E**: `Job::CHello`
+    - **Quit (q/quit/exit)**: Prints "Exiting..", breaks the loop
+    - **Invalid input**: Prints "Invalid selection.", continues the loop
 
    After a job runs, `main` prints the job's label with its exit code (on `Ok`)
    or a failure message (on `Err`), then loops back to the prompt. Running a job
    does **not** exit the program — only `q`/`quit`/`exit` breaks the loop.
 
 5. **Job Execution** (via `src/runner.rs`):
-   - `run()` receives a `Job` and dispatches on `job.kind()` (`JobKind`):
-     - `JobKind::Shell` → `run_shell`: runs `bash <source_path>`
-     - `JobKind::Rust` → `run_rust`: compiles the source with `rustc -o <artifact>`, then executes the artifact
-     - `JobKind::C` → `run_c`: compiles the source with `gcc -o <artifact>`, then executes the artifact
-   - Source and artifact paths come from the `Job` definition in `src/jobs.rs`,
-     rooted at `CARGO_MANIFEST_DIR` (e.g. `modules/shell/shell_script_one.sh`,
-     `modules/rust/hello.rs` → `modules/build/hello_rs`).
-   - For compiled jobs, the build directory is created if needed. If compilation
-     fails, the compiler's exit code is returned without running the artifact.
-   - Returns the exit code wrapped in `io::Result<i32>`.
+    - `run()` receives a `Job` and dispatches on `job.kind()` (`JobKind`):
+        - `JobKind::Shell` → `run_shell`: runs `bash <source_path>`
+        - `JobKind::Rust` → `run_rust`: compiles the source with `rustc -o <artifact>`, then executes the artifact
+        - `JobKind::C` → `run_c`: compiles **all** of `job.c_source_paths()` with
+          `gcc -o <artifact>` in one invocation, then executes the artifact
+    - Source and artifact paths come from the `Job` definition in `src/jobs.rs`,
+      rooted at `CARGO_MANIFEST_DIR` (e.g. `modules/shell/shell_script_one.sh`,
+      `modules/rust/hello.rs` → `modules/build/hello_rs`,
+      `Job::CHello`'s multiple `.c` files → `modules/build/main_c`).
+    - For compiled jobs, the build directory is created if needed. If compilation
+      fails, the compiler's exit code is returned without running the artifact.
+    - Returns the exit code wrapped in `io::Result<i32>`.
 
 6. **Program Termination**: When `q`/`quit`/`exit` breaks the loop, `main` returns `Ok(())` and the program exits.
 
@@ -327,6 +370,16 @@ Depending on the module type, also ensure the job returns the correct `JobKind`:
 
 For compiled modules, add an artifact path under `modules/build/`.
 
+**Multi-file C jobs**: if you add a new `.c` file to `modules/c/` that a `C`
+job depends on, it is not enough for `main.c` to `#include` its header and
+call its functions. You must also add the new file's path to that job's
+`c_source_paths()` in `src/jobs.rs`. A file that's included via its header
+but missing from `c_source_paths()` will compile without error (the
+declarations are visible) but fail at **link** time with
+`undefined reference to ...`, since `gcc` is never told to compile that
+translation unit. This bit the `custom_mempool_hardened.c` module during
+development — worth double-checking whenever the C module list changes.
+
 ## Error Handling
 
 The runner distinguishes between infrastructure errors and process exit codes.
@@ -359,10 +412,14 @@ This is a small local command-menu prototype with support for:
 
 - Three shell script modules
 - One Rust module
-- One C module
+- One C module, itself composed of a small heap-allocation demo
+  (`mem_demo`) and a three-tier memory pool demo (`custom_mempool`,
+  `custom_mempool_hardened`, `custom_mempool_canary`) modeled loosely on
+  hardened_malloc's slot/bitmap/canary design
 
 Future improvements may include:
 
+- Security Enhancements
 - More modules
 - Better formatting of menu output
 - Path canonicalization checks
@@ -370,5 +427,7 @@ Future improvements may include:
 - Execution timeouts
 - More structured logging
 - Tests for job mapping and runner behavior
-
+- A fourth mempool tier with multiple size classes (routing a request to
+  whichever pool's slot size fits, rather than one fixed slot size per pool)
+```
 
