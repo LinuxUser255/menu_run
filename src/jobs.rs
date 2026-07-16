@@ -83,7 +83,7 @@ impl Job {
             Job::ShellTwo => "modules/shell/shell_script_two.sh",
             Job::ShellThree => "modules/shell/shell_script_three.sh",
             Job::RustHello => "modules/rust/hello.rs",
-            Job::CHello => "modules/c/hello.c",
+            Job::CHello => "modules/c/main.c",
         }
     }
 
@@ -96,15 +96,21 @@ impl Job {
         Path::new(env!("CARGO_MANIFEST_DIR")).join(self.source_relative())
     }
 
+    // c source paths
     pub fn c_source_paths(self) -> Vec<PathBuf> {
         match self {
             Job::CHello => vec![
                 self.source_path(),
                 Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/c/mem_demo.c"),
+                Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/c/custom_mempool.c"),
+                Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/c/custom_mempool_hardened.c"),
+                Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/c/custom_mempool_canary.c"),
             ],
             _ => vec![self.source_path()],
         }
     }
+
+    //
 
     #[allow(dead_code)]
     pub fn artifact_path(self) -> Option<PathBuf> {
@@ -114,7 +120,7 @@ impl Job {
                 Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/build/hello_rs")
             ),
             Job::CHello => Some(
-                Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/build/hello_c"),
+                Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/build/main_c"),
             ),
         }
     }
