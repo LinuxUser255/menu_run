@@ -92,8 +92,8 @@ fn run_rust(job: Job) -> io::Result<i32> {
 }
 
 fn run_c(job: Job) -> std::io::Result<i32> {
-    // same shape as run_rust, but invoke `gcc` instead of `rustc`
-    let source = job.source_path();
+    // compile all C source files for this job, then run the ouput binary
+    let sources = job.c_source_paths();
     let artifact = job.artifact_path().ok_or_else(|| {
         io::Error::new(
             io::ErrorKind::InvalidInput,
@@ -101,19 +101,29 @@ fn run_c(job: Job) -> std::io::Result<i32> {
         )
     })?;
 
-    if !source.exists() {
-        return Err(io::Error::new(
-            io::ErrorKind::NotFound,
-            format!("source not found: {}", source.display()),
-        ));
+    for source in &sources {
+        if !source.exists() {
+            return Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                format!("source not found: {}", source.display()),
+            ));
+        }
+
     }
 
     if let Some(parent) = artifact.parent() {
         fs::create_dir_all(parent)?;
     }
 
+    if sources.is_empty() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "C job has no source files",
+        ));
+    }
+
     let compile = Command::new("gcc") // or "gcc"
-        .arg(&source)
+        .args(&sources)
         .arg("-o")
         .arg(&artifact)
         .status()?;

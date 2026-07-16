@@ -96,6 +96,16 @@ impl Job {
         Path::new(env!("CARGO_MANIFEST_DIR")).join(self.source_relative())
     }
 
+    pub fn c_source_paths(self) -> Vec<PathBuf> {
+        match self {
+            Job::CHello => vec![
+                self.source_path(),
+                Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/c/mem_demo.c"),
+            ],
+            _ => vec![self.source_path()],
+        }
+    }
+
     #[allow(dead_code)]
     pub fn artifact_path(self) -> Option<PathBuf> {
         match self {
@@ -104,7 +114,7 @@ impl Job {
                 Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/build/hello_rs")
             ),
             Job::CHello => Some(
-                Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/build/hello_c")
+                Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/build/hello_c"),
             ),
         }
     }
