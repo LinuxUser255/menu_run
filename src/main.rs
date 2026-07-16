@@ -1,10 +1,17 @@
-use std::io::{self, Write};
-use runner::{run, Script};
-use banner::print_banner;
-use crate::banner::print_modules;
+//! Menu loop: read a key, map it to a `Job`, ask `runner` to execute it.
+//!
+//! # Responsibility (SRP)
+//! - Own stdin/stdout interaction and the key → job mapping.
+//! - Do **not** build filesystem paths or spawn processes here (use `jobs` + `runner`
 
 mod runner;
 mod banner;
+mod jobs;
+
+use std::io::{self, Write};
+use jobs::Job;
+use runner::run;
+use crate::banner::{print_banner, print_modules};
 
 fn prompt() {
     println!("Menu: Make a selection (A, B, C, Q/quit/exit):  ");
@@ -13,9 +20,10 @@ fn prompt() {
     print_modules();
 }
 
-fn main() {
+fn main() -> io::Result<()>{
     loop {
         prompt();  // display the prompt to the user
+
         let mut input = String::new();
         if io::stdin().read_line(&mut input).is_err() {
             eprintln!("Read error");
@@ -23,36 +31,49 @@ fn main() {
         }
 
         match input.trim().to_lowercase().as_str() {
-                "a" => {
-                    println!("shell script one");
-                    if let Ok(_exit_code) = run(Script::One) {
-                        // Script executed successfully
-                    }
-                    break;
+            "a" => {
+                // Template for other keys: run(Job::…) then handle Result.
+                match run(Job::ShellOne) {
+                    Ok(code) => println!("{} exited with {code}", Job::ShellOne.label()),
+                    Err(e) => eprintln!("failed: {e}"),
                 }
-                "b" => {
-                    println!("shell script two");
-                    if let Ok(_exit_code) = run(Script::Two) {
-                        // Script executed successfully
-                    }
-                    break;
-                }
-                "c" => {
-                    println!("shell script three");
-                    if let Ok(_exit_code) = run(Script::Three) {
-                        // Script executed successfully
-                    }
-                    break;
-                }
+            }
 
-                "q" | "quit" | "exit" => {
-                   println!("Exiting...");
-                   break;
+            "b" => {
+                match run(Job::ShellTwo) {
+                    Ok(code) => println!("{} exited with {code}", Job::ShellTwo.label()),
+                    Err(e) => eprintln!("failed: {e}"),
                 }
-               _ => {
-                  println!("Invalid selection. Please try again.");
-             }
+            }
+            "c" => {
+                match run(Job::ShellThree) {
+                    Ok(code) => println!("{} exited with {code}", Job::ShellThree.label()),
+                    Err(e) => eprintln!("failed: {e}"),
+                }
+            }
+            "d" => { match run(Job::RustHello) {
+                Ok(code) => println!("{} exited with {code}", Job::RustHello.label()),
+                Err(e) => eprintln!("failed: {e}"),
+            } }
+            "e" => { match run(Job::CHello) {
+                Ok(code) => println!("{} exited with {code}", Job::CHello.label()),
+                Err(e) => eprintln!("failed: {e}"),
+            } }
+
+            "q" | "quit" | "exit" => {
+                println!("Exiting..");
+                break;
+            }
+
+            _ => {
+                println!("Invalid selection.");
+            }
         }
-     }
-     println!();
+
+        println!();
+    }
+
+    Ok(())
 }
+
+

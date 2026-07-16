@@ -3,7 +3,6 @@
 pub fn print_banner() {
     println!(
         r#"
-
                     C O M M A N D    M E N U
        ══════════════════════════════════════════════════════════════
            Run Shell Scripts, Commands & other code from one place
@@ -16,6 +15,8 @@ pub fn print_modules() {
     println!("  a) first module");
     println!("  b) second module");
     println!("  c) third module");
+    println!("  d) run Rust     ");
+    println!("  e) run C     ");
     println!("  q) quit | exit");
     println!("\n═══════════════════════════════════════════");
 }
