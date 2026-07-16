@@ -1,5 +1,5 @@
 //! Allowlisted jobs the menu can run.
-//! Defines the allowlisted jobs that the application is allowed to run.
+//! Defines the allow listed jobs that the application is allowed to run.
 //! # Responsibility (SRP)
 //! This module answers **what** can run: identity, labels, language kind, and
 //! source paths. It should **not** spawn processes — that belongs in `runner`.

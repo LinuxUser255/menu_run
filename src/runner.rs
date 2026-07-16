@@ -1,7 +1,7 @@
 //#![process execution for allowlisted jobs.
 //!
 //! # Responsibility (SRP)
-//! Owns process execution for allowlisted jobs.
+//! Owns process execution for allow listed jobs.
 //! This module answers **how** to run a job: spawn processes, compile sources,
 //! and return exit codes.
 //! It should **not** own menu I/O or decide which menu key means which job.
