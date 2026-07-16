@@ -47,6 +47,7 @@ pub enum Job {
     ShellThree,
     RustHello,
     CHello,
+    TcpParser,
 }
 
 impl Job {
@@ -58,6 +59,7 @@ impl Job {
             Job::ShellThree => "Shell: three",
             Job::RustHello => "Rust: hello",
             Job::CHello => "C: hello",
+            Job::TcpParser => "Rust: tcp_parser",
         }
     }
 
@@ -68,6 +70,7 @@ impl Job {
             Job::ShellTwo => JobKind::Shell,
             Job::ShellThree => JobKind::Shell,
             Job::RustHello => JobKind::Rust,
+            Job::TcpParser => JobKind::Rust,
             Job::CHello => JobKind::C,
         }
     }
@@ -83,6 +86,7 @@ impl Job {
             Job::ShellTwo => "modules/shell/shell_script_two.sh",
             Job::ShellThree => "modules/shell/shell_script_three.sh",
             Job::RustHello => "modules/rust/hello.rs",
+            Job::TcpParser => "modules/rust/tcp_parser.rs",
             Job::CHello => "modules/c/main.c",
         }
     }
@@ -117,10 +121,13 @@ impl Job {
         match self {
             Job::ShellOne | Job::ShellTwo | Job::ShellThree => None,
             Job::RustHello => Some(
-                Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/build/hello_rs")
+                Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/build/hello_rs"),
             ),
             Job::CHello => Some(
                 Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/build/main_c"),
+            ),
+            Job::TcpParser => Some(
+                Path::new(env!("CARGO_MANIFEST_DIR")).join("modules/build/tcp_parser"),
             ),
         }
     }

@@ -7,6 +7,7 @@
 mod runner;
 mod banner;
 mod jobs;
+mod tcp_parser;
 
 use std::io::{self, Write};
 use jobs::Job;
@@ -57,6 +58,10 @@ fn main() -> io::Result<()>{
             } }
             "e" => { match run(Job::CHello) {
                 Ok(code) => println!("{} exited with {code}", Job::CHello.label()),
+                Err(e) => eprintln!("failed: {e}"),
+            } }
+            "f" => { match run(Job::TcpParser) {
+                Ok(code) => println!("{} exited with {code}", Job::TcpParser.label()),
                 Err(e) => eprintln!("failed: {e}"),
             } }
 
